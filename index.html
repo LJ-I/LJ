@@ -52,6 +52,17 @@ textarea{resize:vertical;min-height:60px}
 
 .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .list-header h2{font-size:1.2rem;font-weight:700}
+.filter-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.filter-tab{padding:6px 12px;font-size:.82rem;font-weight:500;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s}
+.filter-tab:hover{background:var(--surface-alt)}
+.filter-tab.active{background:var(--primary);color:#fff}
+.goal-card.completed{opacity:.6;border-color:var(--success-light)}
+.goal-card.completed .goal-card-title{text-decoration:line-through;color:var(--text-muted)}
+.goal-type-tag{position:absolute;top:10px;left:10px;font-size:.68rem;padding:2px 6px;border-radius:6px;font-weight:500}
+.goal-type-tag.long-term{background:var(--primary-light);color:var(--primary)}
+.goal-type-tag.short-term{background:var(--accent-light);color:#b45309}
+.goal-status-tag{font-size:.68rem;padding:2px 6px;border-radius:6px;font-weight:500}
+.goal-status-tag.completed{background:var(--success-light);color:var(--success)}
 .goal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .goal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;position:relative}
 .goal-card:hover{border-color:var(--primary);box-shadow:var(--shadow)}
@@ -206,6 +217,13 @@ textarea{resize:vertical;min-height:60px}
     <h2>我的目标</h2>
     <button class="btn btn-primary btn-sm" onclick="openGoalModal()">+ 新建</button>
   </div>
+  <div class="filter-tabs">
+    <div class="filter-tab active" onclick="filterGoals('all')">全部</div>
+    <div class="filter-tab" onclick="filterGoals('active')">进行中</div>
+    <div class="filter-tab" onclick="filterGoals('completed')">已完成</div>
+    <div class="filter-tab" onclick="filterGoals('long-term')">长期目标</div>
+    <div class="filter-tab" onclick="filterGoals('short-term')">短期目标</div>
+  </div>
   <div id="goalGrid" class="goal-grid"></div>
   <div id="emptyState" class="empty-state" style="display:none">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
@@ -221,7 +239,8 @@ textarea{resize:vertical;min-height:60px}
       <div id="detailTitle" class="detail-title"></div>
       <div id="detailDesc" class="detail-desc"></div>
     </div>
-    <div style="display:flex;gap:6px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button id="markCompleteBtn" class="btn btn-primary btn-sm" onclick="markGoalCompleted()">✓ 标记完成</button>
       <button class="btn btn-secondary btn-sm" onclick="openGoalModal(currentGoalId)">编辑</button>
       <button class="btn btn-danger btn-sm" onclick="deleteGoal(currentGoalId)">删除</button>
     </div>
@@ -343,6 +362,12 @@ textarea{resize:vertical;min-height:60px}
 <div id="goalModal" class="modal-overlay" onclick="if(event.target===this)closeModal('goalModal')">
   <div class="modal">
     <h3 id="goalModalTitle">新建目标</h3>
+    <div class="form-group"><label>目标类型 *</label>
+      <select id="goalType">
+        <option value="long-term">长期目标（持续打卡，如学英语、健身）</option>
+        <option value="short-term">短期目标（一次性任务，如学做一道菜）</option>
+      </select>
+    </div>
     <div class="form-group"><label>目标名称 *</label><input type="text" id="goalName" placeholder="例如：通过英语六级"></div>
     <div class="form-group"><label>描述</label><textarea id="goalDescInput" placeholder="详细描述..."></textarea></div>
     <div class="form-group"><label>截止日期</label><input type="date" id="goalDeadline"></div>
@@ -453,6 +478,7 @@ let editingMethodId = null;
 let pendingVideoFiles = [];
 let summarySaveTimer = null;
 let backupDirHandle = null;
+let currentFilter = 'all';
 
 // ===== Utils =====
 function getLocalDate(d) {
@@ -688,24 +714,64 @@ async function clearAllData() {
 }
 
 // ===== Goal list =====
+function filterGoals(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  renderGoalList();
+}
+
 function renderGoalList() {
   const grid = document.getElementById('goalGrid');
   const empty = document.getElementById('emptyState');
-  const goals = Object.values(data.goals).sort((a,b) => b.createdAt - a.createdAt);
-  if (!goals.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  let goals = Object.values(data.goals).sort((a,b) => b.createdAt - a.createdAt);
+  
+  // 应用筛选
+  if (currentFilter === 'active') {
+    goals = goals.filter(g => g.status !== 'completed');
+  } else if (currentFilter === 'completed') {
+    goals = goals.filter(g => g.status === 'completed');
+  } else if (currentFilter === 'long-term') {
+    goals = goals.filter(g => g.type === 'long-term');
+  } else if (currentFilter === 'short-term') {
+    goals = goals.filter(g => g.type === 'short-term');
+  }
+  
+  if (!goals.length) { 
+    grid.innerHTML = ''; 
+    empty.style.display = 'block';
+    if (currentFilter !== 'all') {
+      empty.querySelector('p').textContent = '当前分类下没有目标';
+    } else {
+      empty.querySelector('p').textContent = '还没有目标';
+    }
+    return; 
+  }
   empty.style.display = 'none';
+  
   grid.innerHTML = goals.map(g => {
     const progress = calcGoalProgress(g);
     const taskCount = Object.values(g.tasks||{}).flat().length;
     const videoCount = Object.values(g.methods||{}).reduce((s,m)=>s+(m.videos||[]).length,0);
     const pl = {high:'高',medium:'中',low:'低'}[g.priority]||'中';
     const dl = g.deadline ? formatDate(g.deadline) : '无期限';
-    return `<div class="goal-card" onclick="showDetailView('${g.id}')">
+    const typeLabel = g.type === 'short-term' ? '短期' : '长期';
+    const typeClass = g.type === 'short-term' ? 'short-term' : 'long-term';
+    const isCompleted = g.status === 'completed';
+    
+    return `<div class="goal-card ${isCompleted ? 'completed' : ''}" onclick="showDetailView('${g.id}')">
+      <span class="goal-type-tag ${typeClass}">${typeLabel}</span>
       ${g.tag?`<span class="goal-card-tag">${esc(g.tag)}</span>`:''}
       <div class="goal-card-title">${esc(g.name)}</div>
       <div class="goal-card-desc">${esc(g.description||'')}</div>
       <div class="goal-card-meta">
-        <span>📅 ${dl}</span><span>📋 ${taskCount}</span><span>🎬 ${videoCount}</span><span>🔥 ${pl}</span>
+        <span>📅 ${dl}</span>
+        <span>📋 ${taskCount}</span>
+        <span>🎬 ${videoCount}</span>
+        <span>🔥 ${pl}</span>
+        ${isCompleted ? '<span class="goal-status-tag completed">✓ 已完成</span>' : ''}
       </div>
       <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${progress}%"></div></div>
     </div>`;
@@ -725,13 +791,49 @@ function renderDetail() {
   if (!goal) { showListView(); return; }
   document.getElementById('detailTitle').textContent = goal.name;
   document.getElementById('detailDesc').textContent = goal.description || '';
+  
+  // 显示/隐藏“标记完成”按钮
+  const markBtn = document.getElementById('markCompleteBtn');
+  if (goal.status === 'completed') {
+    markBtn.textContent = '↩ 重新开启';
+    markBtn.className = 'btn btn-secondary btn-sm';
+  } else {
+    markBtn.textContent = '✓ 标记完成';
+    markBtn.className = 'btn btn-primary btn-sm';
+  }
+  
   renderOverview(goal);
   renderMethods(goal);
   renderTasks(goal);
 }
+
+function markGoalCompleted() {
+  const goal = data.goals[currentGoalId];
+  if (!goal) return;
+  
+  if (goal.status === 'completed') {
+    // 重新开启
+    if (!confirm('确定要重新开启这个目标吗？')) return;
+    goal.status = 'active';
+    showToast('目标已重新开启');
+  } else {
+    // 标记完成
+    if (!confirm('确定要标记为已完成吗？')) return;
+    goal.status = 'completed';
+    goal.completedAt = getLocalNow();
+    showToast('恭喜！目标已完成');
+  }
+  
+  saveData();
+  renderDetail();
+}
 function renderOverview(goal) {
   const pl = {high:'高优先级',medium:'中优先级',low:'低优先级'}[goal.priority]||'中优先级';
+  const typeLabel = goal.type === 'short-term' ? '短期目标' : '长期目标';
+  const statusLabel = goal.status === 'completed' ? '已完成' : '进行中';
   document.getElementById('overviewInfo').innerHTML = `
+    <div class="info-row"><span class="info-label">类型</span><span class="info-value">${typeLabel}</span></div>
+    <div class="info-row"><span class="info-label">状态</span><span class="info-value">${statusLabel}${goal.completedAt ? ' (' + goal.completedAt + ')' : ''}</span></div>
     <div class="info-row"><span class="info-label">创建</span><span class="info-value">${new Date(goal.createdAt).toLocaleDateString('zh-CN')}</span></div>
     <div class="info-row"><span class="info-label">截止</span><span class="info-value">${goal.deadline?formatDate(goal.deadline):'未设置'}</span></div>
     <div class="info-row"><span class="info-label">优先级</span><span class="info-value">${pl}</span></div>
@@ -900,12 +1002,14 @@ function openGoalModal(goalId) {
   document.getElementById('goalModalTitle').textContent = goalId ? '编辑目标' : '新建目标';
   if (goalId) {
     const g = data.goals[goalId];
+    document.getElementById('goalType').value = g.type || 'long-term';
     document.getElementById('goalName').value = g.name;
     document.getElementById('goalDescInput').value = g.description || '';
     document.getElementById('goalDeadline').value = g.deadline || '';
     document.getElementById('goalPriority').value = g.priority || 'medium';
     document.getElementById('goalTag').value = g.tag || '';
   } else {
+    document.getElementById('goalType').value = 'long-term';
     ['goalName','goalDescInput','goalDeadline','goalTag'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('goalPriority').value = 'medium';
   }
@@ -914,8 +1018,10 @@ function openGoalModal(goalId) {
 function saveGoal() {
   const name = document.getElementById('goalName').value.trim();
   if (!name) { alert('请输入名称'); return; }
+  const type = document.getElementById('goalType').value;
   if (editingGoalId) {
     const g = data.goals[editingGoalId];
+    g.type = type;
     g.name = name;
     g.description = document.getElementById('goalDescInput').value.trim();
     g.deadline = document.getElementById('goalDeadline').value;
@@ -923,11 +1029,12 @@ function saveGoal() {
     g.tag = document.getElementById('goalTag').value.trim();
   } else {
     const id = genId();
-    data.goals[id] = { id, name,
+    data.goals[id] = { id, name, type,
       description: document.getElementById('goalDescInput').value.trim(),
       deadline: document.getElementById('goalDeadline').value,
       priority: document.getElementById('goalPriority').value,
       tag: document.getElementById('goalTag').value.trim(),
+      status: 'active',
       createdAt: Date.now(), methods:{}, tasks:{}, dailySummaries:{}
     };
   }
