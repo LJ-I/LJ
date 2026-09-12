@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#5b6abf">
+<title>目标计划工作台</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi55ue5qCH6K6h5YiS5bel5Y2V5a6hIiwic2hvcnRfbmFtZSI6IuiuoeeahOahoSIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjVmNmZhIiwidGhlbWVfY29sb3IiOiIjNWI2YWJmIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjxyZWN0IHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyByeD0nMjAnIGZpbGw9JyM1YjZhYmYnLz48cGF0aCBkPSdNNTAgMjBMNzAgNDVINTVaJyBmaWxsPScjZmZmJy8+PHBhdGggZD0nTTMwIDU1SDcwVjcwSDMwWicgZmlsbD0nI2ZmZicvPjwvc3ZnPiIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f6fa;--surface:#fff;--surface-alt:#f0f1f5;
+  --text:#1a1d2e;--text-secondary:#5a5f7a;--text-muted:#9498b3;
+  --primary:#5b6abf;--primary-light:#e8eafc;--primary-dark:#434fa3;
+  --accent:#f59e0b;--accent-light:#fef3c7;
+  --success:#10b981;--success-light:#d1fae5;
+  --danger:#ef4444;--danger-light:#fee2e2;
+  --border:#e2e4ed;--shadow:0 2px 8px rgba(0,0,0,.06);
+  --radius:10px;--radius-sm:6px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+html{font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;outline:none;transition:border-color .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)}
+textarea{resize:vertical;min-height:60px}
+
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-title{font-size:1.1rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
+.app-title svg{width:22px;height:22px}
+.header-actions{display:flex;gap:6px;align-items:center}
+.sync-status{font-size:.7rem;padding:3px 8px;border-radius:10px;background:var(--surface-alt);color:var(--text-muted)}
+.sync-status.synced{background:var(--success-light);color:var(--success)}
+.sync-status.error{background:var(--danger-light);color:var(--danger)}
+
+.btn{display:inline-flex;align-items:center;gap:4px;padding:7px 12px;border-radius:var(--radius-sm);font-weight:500;transition:all .2s;font-size:.85rem}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--surface-alt);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:var(--danger-light);color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-sm{padding:5px 10px;font-size:.8rem}
+.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm)}
+.btn-icon:hover{background:var(--surface-alt)}
+
+.view{display:none;padding:16px;max-width:1000px;margin:0 auto}
+.view.active{display:block}
+
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.list-header h2{font-size:1.2rem;font-weight:700}
+.goal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;position:relative}
+.goal-card:hover{border-color:var(--primary);box-shadow:var(--shadow)}
+.goal-card-title{font-size:1rem;font-weight:600;margin-bottom:4px;color:var(--text)}
+.goal-card-desc{font-size:.82rem;color:var(--text-secondary);margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.goal-card-meta{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--text-muted);flex-wrap:wrap}
+.goal-card-meta span{display:flex;align-items:center;gap:3px}
+.goal-progress-bar{height:5px;background:var(--surface-alt);border-radius:3px;margin-top:10px;overflow:hidden}
+.goal-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px;transition:width .3s}
+.goal-card-tag{position:absolute;top:10px;right:10px;font-size:.7rem;padding:2px 6px;border-radius:8px;background:var(--primary-light);color:var(--primary);font-weight:500}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+.empty-state p{margin-bottom:12px;font-size:.9rem}
+
+.detail-back{display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary);font-size:.85rem;margin-bottom:12px;padding:4px 0}
+.detail-back:hover{color:var(--primary)}
+.detail-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px}
+.detail-title{font-size:1.3rem;font-weight:700}
+.detail-desc{color:var(--text-secondary);margin-top:4px;font-size:.85rem}
+.detail-tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.detail-tab{padding:8px 14px;font-weight:500;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap;font-size:.9rem}
+.detail-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.overview-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.overview-section h3{font-size:.9rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.overview-section h3 svg{width:16px;height:16px;color:var(--primary)}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--surface-alt);font-size:.85rem}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--text-muted)}
+.info-value{font-weight:500}
+.stat-card{text-align:center;padding:12px;background:var(--primary-light);border-radius:var(--radius-sm);margin-top:8px}
+.stat-number{font-size:1.5rem;font-weight:700;color:var(--primary)}
+.stat-label{font-size:.75rem;color:var(--text-secondary);margin-top:2px}
+
+.method-list{display:flex;flex-direction:column;gap:12px}
+.method-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;position:relative}
+.method-item-header{display:flex;justify-content:space-between;align-items:flex-start}
+.method-item-title{font-weight:600;font-size:.95rem}
+.method-item-desc{font-size:.82rem;color:var(--text-secondary);margin-top:4px}
+.method-item-actions{display:flex;gap:4px;flex-shrink:0}
+.method-videos{margin-top:10px;border-top:1px solid var(--surface-alt);padding-top:10px}
+.method-videos-title{font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.method-videos-title svg{width:12px;height:12px}
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.video-card{background:var(--surface-alt);border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)}
+.video-card video{width:100%;display:block;background:#000;max-height:150px}
+.video-info{padding:6px 8px;display:flex;align-items:center;justify-content:space-between;gap:4px}
+.video-info-title{font-size:.72rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.video-info-actions{display:flex;gap:2px}
+
+.daily-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.daily-date-nav{display:flex;align-items:center;gap:8px}
+.daily-date-nav button{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface-alt)}
+.daily-date{font-weight:600;font-size:.9rem;min-width:120px;text-align:center}
+.task-list{display:flex;flex-direction:column;gap:8px}
+.task-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.task-item.completed{opacity:.6;background:var(--surface-alt)}
+.task-item.completed .task-item-title{text-decoration:line-through}
+.task-checkbox{width:22px;height:22px;border:2px solid var(--border);border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.task-checkbox.checked{background:var(--success);border-color:var(--success)}
+.task-checkbox.checked::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.task-item-content{flex:1;min-width:0}
+.task-item-title{font-weight:500;font-size:.9rem}
+.task-item-meta{font-size:.75rem;color:var(--text-muted);margin-top:2px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.task-method-tag{display:inline-flex;align-items:center;gap:2px;font-size:.68rem;padding:1px 5px;border-radius:6px;background:var(--accent-light);color:#b45309;font-weight:500}
+.task-completed-time{font-size:.68rem;color:var(--success);font-weight:500}
+
+.daily-summary{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.daily-summary-title{font-size:.85rem;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:4px;color:var(--text-secondary)}
+.daily-summary textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;min-height:50px;font-size:.85rem}
+.daily-summary-saved{font-size:.7rem;color:var(--success);margin-top:3px;opacity:0;transition:opacity .3s}
+.daily-summary-saved.show{opacity:1}
+
+.calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calendar-nav{display:flex;align-items:center;gap:8px}
+.calendar-nav button{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface-alt)}
+.calendar-month{font-weight:600;font-size:.9rem;min-width:100px;text-align:center}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
+.calendar-weekday{text-align:center;font-size:.7rem;color:var(--text-muted);font-weight:600;padding:4px 0}
+.calendar-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-size:.82rem;cursor:pointer;transition:all .2s;position:relative;border:1px solid transparent}
+.calendar-day:hover{background:var(--surface-alt)}
+.calendar-day.empty{cursor:default}
+.calendar-day.today{border-color:var(--primary);font-weight:600}
+.calendar-day.has-checkin{background:var(--success-light);color:var(--success);font-weight:600}
+.calendar-day.full-complete{background:var(--success);color:#fff}
+.calendar-day-detail{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:none}
+.calendar-day-detail.active{display:block}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+.modal h3{font-size:1.05rem;font-weight:700;margin-bottom:16px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:.82rem;font-weight:500;margin-bottom:4px;color:var(--text-secondary)}
+.form-group input,.form-group textarea,.form-group select{width:100%}
+.form-group .hint{font-size:.72rem;color:var(--text-muted);margin-top:3px}
+.form-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:16px}
+
+.video-upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface-alt)}
+.video-upload-area:hover{border-color:var(--primary);background:var(--primary-light)}
+.video-upload-area p{font-size:.82rem;color:var(--text-secondary)}
+.video-pending-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;max-height:150px;overflow-y:auto}
+.video-pending-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface-alt);border-radius:var(--radius-sm);font-size:.8rem}
+.video-pending-item .vpi-info{flex:1;min-width:0}
+.video-pending-item .vpi-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.video-pending-item .vpi-size{font-size:.68rem;color:var(--text-muted)}
+
+/* Settings panel */
+.settings-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.settings-panel h3{font-size:.95rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--surface-alt);font-size:.85rem}
+.settings-row:last-child{border-bottom:none}
+.settings-row label{color:var(--text-secondary)}
+.settings-row .value{font-weight:500;color:var(--text)}
+.settings-row .value.success{color:var(--success)}
+.settings-row .value.warning{color:var(--accent)}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:20px;font-size:.85rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+@media(max-width:600px){
+  .overview-grid{grid-template-columns:1fr}
+  .goal-grid{grid-template-columns:1fr}
+  .video-grid{grid-template-columns:1fr 1fr}
+  .detail-header{flex-direction:column}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+    目标计划
+  </div>
+  <div class="header-actions">
+    <span id="syncStatus" class="sync-status">本地</span>
+    <button class="btn-icon" onclick="showSettings()" title="设置">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="listView" class="view active">
+  <div class="list-header">
+    <h2>我的目标</h2>
+    <button class="btn btn-primary btn-sm" onclick="openGoalModal()">+ 新建</button>
+  </div>
+  <div id="goalGrid" class="goal-grid"></div>
+  <div id="emptyState" class="empty-state" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+    <p>还没有目标</p>
+    <button class="btn btn-primary btn-sm" onclick="openGoalModal()">创建第一个目标</button>
+  </div>
+</div>
+
+<div id="detailView" class="view">
+  <button class="detail-back" onclick="showListView()">← 返回</button>
+  <div class="detail-header">
+    <div>
+      <div id="detailTitle" class="detail-title"></div>
+      <div id="detailDesc" class="detail-desc"></div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-secondary btn-sm" onclick="openGoalModal(currentGoalId)">编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteGoal(currentGoalId)">删除</button>
+    </div>
+  </div>
+  <div class="detail-tabs">
+    <button class="detail-tab active" data-tab="overview" onclick="switchTab('overview')">概览</button>
+    <button class="detail-tab" data-tab="methods" onclick="switchTab('methods')">方法</button>
+    <button class="detail-tab" data-tab="tasks" onclick="switchTab('tasks')">打卡</button>
+    <button class="detail-tab" data-tab="calendar" onclick="switchTab('calendar')">日历</button>
+  </div>
+
+  <div id="tabOverview" class="tab-panel active">
+    <div class="overview-grid">
+      <div class="overview-section">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>目标信息</h3>
+        <div id="overviewInfo"></div>
+      </div>
+      <div class="overview-section">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>进度统计</h3>
+        <div id="overviewStats"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabMethods" class="tab-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="font-size:.9rem;font-weight:600">实现方法</h3>
+      <button class="btn btn-primary btn-sm" onclick="openMethodModal()">+ 添加</button>
+    </div>
+    <div id="methodList" class="method-list"></div>
+  </div>
+
+  <div id="tabTasks" class="tab-panel">
+    <div class="daily-header">
+      <div class="daily-date-nav">
+        <button onclick="changeTaskDate(-1)">←</button>
+        <span id="taskDateDisplay" class="daily-date"></span>
+        <button onclick="changeTaskDate(1)">→</button>
+        <button class="btn btn-secondary btn-sm" onclick="goToToday()">今天</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ 任务</button>
+    </div>
+    <div id="taskList" class="task-list"></div>
+    <div id="dailySummary" class="daily-summary" style="display:none">
+      <div class="daily-summary-title">📝 今日小结</div>
+      <textarea id="dailySummaryText" placeholder="今天感觉怎么样？" oninput="onSummaryInput()"></textarea>
+      <div id="dailySummarySaved" class="daily-summary-saved">✓ 已保存</div>
+    </div>
+  </div>
+
+  <div id="tabCalendar" class="tab-panel">
+    <div class="calendar-header">
+      <div class="calendar-nav">
+        <button onclick="changeCalendarMonth(-1)">←</button>
+        <span id="calendarMonthDisplay" class="calendar-month"></span>
+        <button onclick="changeCalendarMonth(1)">→</button>
+      </div>
+    </div>
+    <div id="calendarGrid" class="calendar-grid"></div>
+    <div id="calendarDayDetail" class="calendar-day-detail"></div>
+  </div>
+</div>
+
+<!-- Settings View -->
+<div id="settingsView" class="view">
+  <button class="detail-back" onclick="hideSettings()">← 返回</button>
+  <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:16px">设置</h2>
+  
+  <div class="settings-panel">
+    <h3>💾 数据备份</h3>
+    <div class="settings-row">
+      <label>备份文件夹</label>
+      <span id="backupFolderStatus" class="value">未设置</span>
+    </div>
+    <div class="settings-row">
+      <label>自动备份</label>
+      <span id="autoBackupStatus" class="value">关闭</span>
+    </div>
+    <div class="settings-row">
+      <label>上次备份</label>
+      <span id="lastBackupTime" class="value">从未</span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="selectBackupFolder()">选择文件夹</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleAutoBackup()">开启/关闭自动备份</button>
+      <button class="btn btn-secondary btn-sm" onclick="manualBackup()">立即备份</button>
+    </div>
+    <div class="hint" style="margin-top:8px;font-size:.72rem;color:var(--text-muted)">
+      💡 提示：选择 OneDrive/坚果云/百度网盘 的同步文件夹，可实现跨设备同步
+    </div>
+  </div>
+
+  <div class="settings-panel">
+    <h3>📥 数据恢复</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">从备份文件恢复</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAllData()">清除所有数据</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+
+  <div class="settings-panel">
+    <h3>ℹ️ 关于</h3>
+    <div class="settings-row">
+      <label>版本</label>
+      <span class="value">PWA v1.0</span>
+    </div>
+    <div class="settings-row">
+      <label>存储使用</label>
+      <span id="storageUsed" class="value">计算中...</span>
+    </div>
+    <div class="hint" style="margin-top:8px;font-size:.72rem;color:var(--text-muted)">
+      数据保存在浏览器本地，清除浏览器数据会丢失。建议开启自动备份。
+    </div>
+  </div>
+</div>
+
+<!-- Goal Modal -->
+<div id="goalModal" class="modal-overlay" onclick="if(event.target===this)closeModal('goalModal')">
+  <div class="modal">
+    <h3 id="goalModalTitle">新建目标</h3>
+    <div class="form-group"><label>目标名称 *</label><input type="text" id="goalName" placeholder="例如：通过英语六级"></div>
+    <div class="form-group"><label>描述</label><textarea id="goalDescInput" placeholder="详细描述..."></textarea></div>
+    <div class="form-group"><label>截止日期</label><input type="date" id="goalDeadline"></div>
+    <div class="form-group"><label>优先级</label>
+      <select id="goalPriority"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select>
+    </div>
+    <div class="form-group"><label>标签</label><input type="text" id="goalTag" placeholder="学习、健康..."></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('goalModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveGoal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Method Modal -->
+<div id="methodModal" class="modal-overlay" onclick="if(event.target===this)closeModal('methodModal')">
+  <div class="modal">
+    <h3 id="methodModalTitle">添加方法</h3>
+    <div class="form-group"><label>方法名称 *</label><input type="text" id="methodName" placeholder="例如：每天背50个单词"></div>
+    <div class="form-group"><label>详细说明</label><textarea id="methodDesc" placeholder="具体怎么做？"></textarea></div>
+    <div class="form-group">
+      <label>📹 训练视频</label>
+      <div class="hint" style="margin-bottom:6px">选择本地视频文件，支持 mp4/webm/mov</div>
+      <div class="video-upload-area" onclick="document.getElementById('videoFileInput').click()">
+        <p>点击选择视频文件</p>
+      </div>
+      <input type="file" id="videoFileInput" accept="video/*" multiple style="display:none" onchange="onVideoFilesSelected(event)">
+      <div id="videoPendingList" class="video-pending-list"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('methodModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveMethod()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div id="taskModal" class="modal-overlay" onclick="if(event.target===this)closeModal('taskModal')">
+  <div class="modal">
+    <h3>添加任务</h3>
+    <div class="form-group"><label>任务内容 *</label><input type="text" id="taskContent" placeholder="例如：阅读30分钟"></div>
+    <div class="form-group"><label>关联方法</label>
+      <select id="taskMethodLink"><option value="">不关联</option></select>
+    </div>
+    <div class="form-group"><label>预计时长</label><input type="text" id="taskDuration" placeholder="30分钟"></div>
+    <div class="form-group"><label>备注</label><textarea id="taskNote" placeholder="补充说明..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('taskModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveTask()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ===== IndexedDB for videos =====
+const DB_NAME = 'plan_workspace_videos';
+const DB_STORE = 'videos';
+let videoDB = null;
+function openVideoDB() {
+  return new Promise((resolve, reject) => {
+    if (videoDB) { resolve(videoDB); return; }
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = e => { videoDB = e.target.result; resolve(videoDB); };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+function saveVideoBlob(id, blob) {
+  return new Promise((resolve, reject) => {
+    const tx = videoDB.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(blob, id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e.target.error);
+  });
+}
+function getVideoBlob(id) {
+  return new Promise((resolve, reject) => {
+    const tx = videoDB.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+function deleteVideoBlob(id) {
+  return new Promise((resolve, reject) => {
+    const tx = videoDB.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e.target.error);
+  });
+}
+
+// ===== State =====
+const STORAGE_KEY = 'plan_workspace_pwa_v1';
+const SETTINGS_KEY = 'plan_workspace_settings_v1';
+let data = { goals: {} };
+let settings = { backupDirHandle: null, autoBackup: false, lastBackup: null };
+let currentGoalId = null;
+let currentTaskDate = getLocalDate();
+let calendarYear, calendarMonth;
+let editingGoalId = null;
+let editingMethodId = null;
+let pendingVideoFiles = [];
+let summarySaveTimer = null;
+let backupDirHandle = null;
+
+// ===== Utils =====
+function getLocalDate(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getLocalNow() {
+  const d = new Date();
+  return getLocalDate(d) + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) data = JSON.parse(raw);
+    if (!data.goals) data.goals = {};
+    for (const k of ['plan_workspace_data_v4','plan_workspace_data_v3','plan_workspace_data_v2','plan_workspace_data_v1']) {
+      const old = localStorage.getItem(k);
+      if (old && !raw) { const o = JSON.parse(old); if (o.goals) data = o; }
+    }
+  } catch(e) { data = { goals: {} }; }
+}
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (settings.autoBackup && backupDirHandle) scheduleAutoBackup();
+    updateSyncStatus('synced');
+  } catch(e) {
+    alert('保存失败');
+    updateSyncStatus('error');
+  }
+}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) settings = JSON.parse(raw);
+  } catch(e) {}
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function formatDate(s) { if(!s)return''; const p=s.split('-'); return p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日'; }
+function formatSize(b) { if(b<1024)return b+' B'; if(b<1048576)return(b/1024).toFixed(1)+' KB'; return(b/1048576).toFixed(1)+' MB'; }
+function esc(s) { if(s==null)return''; const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; }
+function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+function updateSyncStatus(status) {
+  const el = document.getElementById('syncStatus');
+  if (status === 'synced') { el.textContent = '✓ 已同步'; el.className = 'sync-status synced'; }
+  else if (status === 'error') { el.textContent = '✗ 错误'; el.className = 'sync-status error'; }
+  else { el.textContent = '本地'; el.className = 'sync-status'; }
+}
+
+// ===== Auto Backup =====
+let backupTimer = null;
+function scheduleAutoBackup() {
+  if (backupTimer) clearTimeout(backupTimer);
+  backupTimer = setTimeout(doAutoBackup, 3000);
+}
+async function doAutoBackup() {
+  if (!backupDirHandle) return;
+  try {
+    const perm = await backupDirHandle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') {
+      const req = await backupDirHandle.requestPermission({ mode: 'readwrite' });
+      if (req !== 'granted') return;
+    }
+    const json = JSON.stringify(data, null, 2);
+    const fileName = 'plan-workspace-backup.json';
+    const fileHandle = await backupDirHandle.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(json);
+    await writable.close();
+    settings.lastBackup = getLocalNow();
+    saveSettings();
+    updateSettingsUI();
+    console.log('Auto backup completed');
+  } catch(e) {
+    console.warn('Auto backup failed:', e);
+  }
+}
+
+// ===== View switching =====
+function showListView() {
+  document.getElementById('listView').classList.add('active');
+  document.getElementById('detailView').classList.remove('active');
+  document.getElementById('settingsView').classList.remove('active');
+  currentGoalId = null;
+  renderGoalList();
+}
+function showDetailView(goalId) {
+  currentGoalId = goalId;
+  document.getElementById('listView').classList.remove('active');
+  document.getElementById('detailView').classList.add('active');
+  document.getElementById('settingsView').classList.remove('active');
+  const now = new Date();
+  calendarYear = now.getFullYear();
+  calendarMonth = now.getMonth();
+  renderDetail();
+}
+function showSettings() {
+  document.getElementById('listView').classList.remove('active');
+  document.getElementById('detailView').classList.remove('active');
+  document.getElementById('settingsView').classList.add('active');
+  updateSettingsUI();
+}
+function hideSettings() { showListView(); }
+function switchTab(tab) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (tab === 'calendar') renderCalendar();
+}
+
+// ===== Settings UI =====
+async function updateSettingsUI() {
+  const folderEl = document.getElementById('backupFolderStatus');
+  const autoEl = document.getElementById('autoBackupStatus');
+  const lastEl = document.getElementById('lastBackupTime');
+  if (backupDirHandle) {
+    folderEl.textContent = backupDirHandle.name || '已设置';
+    folderEl.className = 'value success';
+  } else {
+    folderEl.textContent = '未设置';
+    folderEl.className = 'value';
+  }
+  autoEl.textContent = settings.autoBackup ? '已开启' : '关闭';
+  autoEl.className = settings.autoBackup ? 'value success' : 'value';
+  lastEl.textContent = settings.lastBackup || '从未';
+  // Calculate storage
+  let total = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('plan_workspace')) total += localStorage.getItem(key).length * 2;
+  }
+  document.getElementById('storageUsed').textContent = formatSize(total) + ' (不含视频)';
+}
+
+async function selectBackupFolder() {
+  if (!window.showDirectoryPicker) {
+    alert('你的浏览器不支持选择文件夹功能，请使用 Chrome 或 Edge 浏览器');
+    return;
+  }
+  try {
+    backupDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    settings.backupDirHandle = { name: backupDirHandle.name };
+    saveSettings();
+    showToast('已选择备份文件夹: ' + backupDirHandle.name);
+    updateSettingsUI();
+    if (settings.autoBackup) doAutoBackup();
+  } catch(e) {
+    if (e.name !== 'AbortError') alert('选择失败: ' + e.message);
+  }
+}
+
+function toggleAutoBackup() {
+  settings.autoBackup = !settings.autoBackup;
+  saveSettings();
+  showToast(settings.autoBackup ? '已开启自动备份' : '已关闭自动备份');
+  updateSettingsUI();
+  if (settings.autoBackup && backupDirHandle) doAutoBackup();
+}
+
+async function manualBackup() {
+  if (!backupDirHandle) {
+    alert('请先选择备份文件夹');
+    return;
+  }
+  try {
+    const json = JSON.stringify(data, null, 2);
+    const fileName = 'plan-workspace-backup-' + getLocalDate() + '.json';
+    const fileHandle = await backupDirHandle.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(json);
+    await writable.close();
+    settings.lastBackup = getLocalNow();
+    saveSettings();
+    showToast('备份完成!');
+    updateSettingsUI();
+  } catch(e) {
+    alert('备份失败: ' + e.message);
+  }
+}
+
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  try {
+    const text = await file.text();
+    const imported = JSON.parse(text);
+    if (!imported.goals) { alert('文件格式不正确'); return; }
+    if (!confirm('导入将覆盖当前数据，确定继续？')) return;
+    data = imported;
+    saveData();
+    showListView();
+    showToast('导入成功!');
+  } catch(e) {
+    alert('导入失败: ' + e.message);
+  }
+}
+
+async function clearAllData() {
+  if (!confirm('确定清除所有数据？此操作不可恢复！')) return;
+  if (!confirm('再次确认：所有目标、任务、视频都会被删除！')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  data = { goals: {} };
+  // Clear videos
+  try {
+    const tx = videoDB.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).clear();
+  } catch(e) {}
+  showListView();
+  showToast('数据已清除');
+}
+
+// ===== Goal list =====
+function renderGoalList() {
+  const grid = document.getElementById('goalGrid');
+  const empty = document.getElementById('emptyState');
+  const goals = Object.values(data.goals).sort((a,b) => b.createdAt - a.createdAt);
+  if (!goals.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = goals.map(g => {
+    const progress = calcGoalProgress(g);
+    const taskCount = Object.values(g.tasks||{}).flat().length;
+    const videoCount = Object.values(g.methods||{}).reduce((s,m)=>s+(m.videos||[]).length,0);
+    const pl = {high:'高',medium:'中',low:'低'}[g.priority]||'中';
+    const dl = g.deadline ? formatDate(g.deadline) : '无期限';
+    return `<div class="goal-card" onclick="showDetailView('${g.id}')">
+      ${g.tag?`<span class="goal-card-tag">${esc(g.tag)}</span>`:''}
+      <div class="goal-card-title">${esc(g.name)}</div>
+      <div class="goal-card-desc">${esc(g.description||'')}</div>
+      <div class="goal-card-meta">
+        <span>📅 ${dl}</span><span>📋 ${taskCount}</span><span>🎬 ${videoCount}</span><span>🔥 ${pl}</span>
+      </div>
+      <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${progress}%"></div></div>
+    </div>`;
+  }).join('');
+}
+function calcGoalProgress(goal) {
+  const dates = Object.keys(goal.tasks||{});
+  if (!dates.length) return 0;
+  let total=0,done=0;
+  dates.forEach(d => { const arr=goal.tasks[d]||[]; total+=arr.length; done+=arr.filter(t=>t.completed).length; });
+  return total ? Math.round(done/total*100) : 0;
+}
+
+// ===== Detail =====
+function renderDetail() {
+  const goal = data.goals[currentGoalId];
+  if (!goal) { showListView(); return; }
+  document.getElementById('detailTitle').textContent = goal.name;
+  document.getElementById('detailDesc').textContent = goal.description || '';
+  renderOverview(goal);
+  renderMethods(goal);
+  renderTasks(goal);
+}
+function renderOverview(goal) {
+  const pl = {high:'高优先级',medium:'中优先级',low:'低优先级'}[goal.priority]||'中优先级';
+  document.getElementById('overviewInfo').innerHTML = `
+    <div class="info-row"><span class="info-label">创建</span><span class="info-value">${new Date(goal.createdAt).toLocaleDateString('zh-CN')}</span></div>
+    <div class="info-row"><span class="info-label">截止</span><span class="info-value">${goal.deadline?formatDate(goal.deadline):'未设置'}</span></div>
+    <div class="info-row"><span class="info-label">优先级</span><span class="info-value">${pl}</span></div>
+    <div class="info-row"><span class="info-label">标签</span><span class="info-value">${goal.tag||'无'}</span></div>`;
+  const progress = calcGoalProgress(goal);
+  const videoCount = Object.values(goal.methods||{}).reduce((s,m)=>s+(m.videos||[]).length,0);
+  const allTasks = Object.values(goal.tasks||{}).flat();
+  const doneTasks = allTasks.filter(t=>t.completed).length;
+  let checkinDays = 0;
+  Object.keys(goal.tasks||{}).forEach(d => { if((goal.tasks[d]||[]).some(t=>t.completed)) checkinDays++; });
+  document.getElementById('overviewStats').innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div class="stat-card"><div class="stat-number">${progress}%</div><div class="stat-label">完成度</div></div>
+    <div class="stat-card" style="background:var(--success-light)"><div class="stat-number" style="color:var(--success)">${doneTasks}/${allTasks.length}</div><div class="stat-label">任务</div></div>
+    <div class="stat-card" style="background:var(--accent-light)"><div class="stat-number" style="color:var(--accent)">${checkinDays}</div><div class="stat-label">打卡天数</div></div>
+    <div class="stat-card" style="background:var(--primary-light)"><div class="stat-number">${videoCount}</div><div class="stat-label">视频</div></div>
+  </div>`;
+}
+
+async function renderMethods(goal) {
+  const list = document.getElementById('methodList');
+  const methods = Object.values(goal.methods||{});
+  if (!methods.length) { list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">还没有方法</div>'; return; }
+  const videoUrls = {};
+  for (const m of methods) {
+    for (const v of (m.videos||[])) {
+      try { const blob = await getVideoBlob(v.id); if(blob) videoUrls[v.id] = URL.createObjectURL(blob); } catch(e) {}
+    }
+  }
+  list.innerHTML = methods.map(m => {
+    const videos = m.videos || [];
+    let vh = '';
+    if (videos.length) {
+      vh = `<div class="method-videos"><div class="method-videos-title">📹 视频 (${videos.length})</div>
+        <div class="video-grid">${videos.map(v => {
+          const url = videoUrls[v.id];
+          if (!url) return `<div class="video-card"><div style="padding:15px;text-align:center;color:var(--text-muted);font-size:.78rem">视频丢失</div></div>`;
+          return `<div class="video-card"><video src="${escAttr(url)}" controls preload="metadata"></video>
+            <div class="video-info"><span class="video-info-title">${esc(v.name)}</span>
+            <div class="video-info-actions">
+              <a class="btn-icon" style="width:22px;height:22px" href="${escAttr(url)}" download="${escAttr(v.name)}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+              <button class="btn-icon" style="width:22px;height:22px" onclick="removeVideoFromMethod('${escAttr(m.id)}','${escAttr(v.id)}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div></div></div>`;
+        }).join('')}</div></div>`;
+    }
+    return `<div class="method-item"><div class="method-item-header"><div>
+      <div class="method-item-title">${esc(m.name)}</div>
+      <div class="method-item-desc">${esc(m.description||'')}</div>
+    </div><div class="method-item-actions">
+      <button class="btn-icon" onclick="openMethodModal('${m.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      <button class="btn-icon" onclick="deleteMethod('${m.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+    </div></div>${vh}</div>`;
+  }).join('');
+}
+
+function renderTasks(goal) {
+  document.getElementById('taskDateDisplay').textContent = formatDate(currentTaskDate);
+  const list = document.getElementById('taskList');
+  const dayTasks = (goal.tasks||{})[currentTaskDate] || [];
+  if (!dayTasks.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">点击 + 任务 添加</div>';
+  } else {
+    const methods = goal.methods || {};
+    list.innerHTML = dayTasks.map((t,idx) => {
+      const lm = t.methodId && methods[t.methodId] ? methods[t.methodId] : null;
+      const tag = lm ? `<span class="task-method-tag">📎 ${esc(lm.name)}</span>` : '';
+      const ct = t.completedAt ? `<span class="task-completed-time">✓ ${t.completedAt}</span>` : '';
+      return `<div class="task-item ${t.completed?'completed':''}">
+        <div class="task-checkbox ${t.completed?'checked':''}" onclick="toggleTask('${currentTaskDate}',${idx})"></div>
+        <div class="task-item-content">
+          <div class="task-item-title">${esc(t.content)}</div>
+          <div class="task-item-meta">${tag}${ct}<span>${[t.duration,t.note].filter(Boolean).map(esc).join(' · ')}</span></div>
+        </div>
+        <button class="btn-icon" onclick="deleteTask('${currentTaskDate}',${idx})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+      </div>`;
+    }).join('');
+  }
+  const sb = document.getElementById('dailySummary');
+  const st = document.getElementById('dailySummaryText');
+  const dd = (goal.dailySummaries||{})[currentTaskDate];
+  if (dayTasks.length || dd) { sb.style.display='block'; st.value=dd||''; } else { sb.style.display='none'; }
+}
+function toggleTask(date,idx) {
+  const goal = data.goals[currentGoalId];
+  if (goal.tasks[date] && goal.tasks[date][idx]) {
+    const t = goal.tasks[date][idx];
+    t.completed = !t.completed;
+    t.completedAt = t.completed ? getLocalNow() : null;
+    saveData();
+    renderTasks(goal);
+  }
+}
+function changeTaskDate(offset) {
+  const d = new Date(currentTaskDate);
+  d.setDate(d.getDate()+offset);
+  currentTaskDate = getLocalDate(d);
+  renderTasks(data.goals[currentGoalId]);
+}
+function goToToday() { currentTaskDate = getLocalDate(); renderTasks(data.goals[currentGoalId]); }
+function onSummaryInput() {
+  if (summarySaveTimer) clearTimeout(summarySaveTimer);
+  summarySaveTimer = setTimeout(saveCurrentSummary, 500);
+}
+function saveCurrentSummary() {
+  const goal = data.goals[currentGoalId];
+  if (!goal) return;
+  if (!goal.dailySummaries) goal.dailySummaries = {};
+  const text = document.getElementById('dailySummaryText').value.trim();
+  if (text) goal.dailySummaries[currentTaskDate] = text;
+  else delete goal.dailySummaries[currentTaskDate];
+  saveData();
+  const s = document.getElementById('dailySummarySaved');
+  s.classList.add('show');
+  setTimeout(() => s.classList.remove('show'), 1500);
+}
+
+function renderCalendar() {
+  const goal = data.goals[currentGoalId];
+  if (!goal) return;
+  document.getElementById('calendarMonthDisplay').textContent = calendarYear+'年'+(calendarMonth+1)+'月';
+  const grid = document.getElementById('calendarGrid');
+  let html = ['日','一','二','三','四','五','六'].map(w=>`<div class="calendar-weekday">${w}</div>`).join('');
+  const firstDay = new Date(calendarYear,calendarMonth,1).getDay();
+  const daysInMonth = new Date(calendarYear,calendarMonth+1,0).getDate();
+  const today = getLocalDate();
+  for (let i=0;i<firstDay;i++) html += '<div class="calendar-day empty"></div>';
+  for (let d=1;d<=daysInMonth;d++) {
+    const ds = calendarYear+'-'+String(calendarMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dt = (goal.tasks||{})[ds]||[];
+    const total = dt.length, done = dt.filter(t=>t.completed).length;
+    let cls = 'calendar-day';
+    if (ds===today) cls+=' today';
+    if (total>0 && done===total) cls+=' full-complete';
+    else if (done>0) cls+=' has-checkin';
+    html += `<div class="${cls}" onclick="showCalendarDayDetail('${ds}')">${d}</div>`;
+  }
+  grid.innerHTML = html;
+  document.getElementById('calendarDayDetail').classList.remove('active');
+}
+function changeCalendarMonth(offset) {
+  calendarMonth += offset;
+  if (calendarMonth<0){calendarMonth=11;calendarYear--;}
+  if (calendarMonth>11){calendarMonth=0;calendarYear++;}
+  renderCalendar();
+}
+function showCalendarDayDetail(ds) {
+  const goal = data.goals[currentGoalId];
+  const dt = (goal.tasks||{})[ds]||[];
+  const summary = (goal.dailySummaries||{})[ds];
+  const detail = document.getElementById('calendarDayDetail');
+  const done = dt.filter(t=>t.completed).length;
+  let th = dt.length ? dt.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--surface-alt);border-radius:4px;font-size:.82rem;${t.completed?'color:var(--success)':''}">
+    <span>${t.completed?'✓':'○'}</span><span${t.completed?' style="text-decoration:line-through"':''}>${esc(t.content)}</span>
+  </div>`).join('') : '<div style="font-size:.82rem;color:var(--text-muted)">无任务</div>';
+  detail.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h4 style="font-size:.95rem;font-weight:600">${formatDate(ds)} · ${done}/${dt.length}</h4>
+    <button class="btn btn-secondary btn-sm" onclick="currentTaskDate='${ds}';switchTab('tasks');renderTasks(data.goals[currentGoalId])">去打卡</button>
+  </div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">${th}</div>
+  <div style="font-size:.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px">小结</div>
+  ${summary?`<div style="font-size:.82rem;color:var(--text-secondary);padding:8px;background:var(--surface-alt);border-radius:4px">${esc(summary)}</div>`:'<div style="font-size:.8rem;color:var(--text-muted);font-style:italic">无</div>'}`;
+  detail.classList.add('active');
+}
+
+// ===== Goal CRUD =====
+function openGoalModal(goalId) {
+  editingGoalId = goalId || null;
+  document.getElementById('goalModalTitle').textContent = goalId ? '编辑目标' : '新建目标';
+  if (goalId) {
+    const g = data.goals[goalId];
+    document.getElementById('goalName').value = g.name;
+    document.getElementById('goalDescInput').value = g.description || '';
+    document.getElementById('goalDeadline').value = g.deadline || '';
+    document.getElementById('goalPriority').value = g.priority || 'medium';
+    document.getElementById('goalTag').value = g.tag || '';
+  } else {
+    ['goalName','goalDescInput','goalDeadline','goalTag'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('goalPriority').value = 'medium';
+  }
+  document.getElementById('goalModal').classList.add('active');
+}
+function saveGoal() {
+  const name = document.getElementById('goalName').value.trim();
+  if (!name) { alert('请输入名称'); return; }
+  if (editingGoalId) {
+    const g = data.goals[editingGoalId];
+    g.name = name;
+    g.description = document.getElementById('goalDescInput').value.trim();
+    g.deadline = document.getElementById('goalDeadline').value;
+    g.priority = document.getElementById('goalPriority').value;
+    g.tag = document.getElementById('goalTag').value.trim();
+  } else {
+    const id = genId();
+    data.goals[id] = { id, name,
+      description: document.getElementById('goalDescInput').value.trim(),
+      deadline: document.getElementById('goalDeadline').value,
+      priority: document.getElementById('goalPriority').value,
+      tag: document.getElementById('goalTag').value.trim(),
+      createdAt: Date.now(), methods:{}, tasks:{}, dailySummaries:{}
+    };
+  }
+  saveData();
+  closeModal('goalModal');
+  if (currentGoalId && editingGoalId) renderDetail();
+  else renderGoalList();
+}
+async function deleteGoal(goalId) {
+  if (!confirm('删除此目标？所有数据会被删除。')) return;
+  const goal = data.goals[goalId];
+  for (const m of Object.values(goal.methods||{})) {
+    for (const v of (m.videos||[])) { try { await deleteVideoBlob(v.id); } catch(e){} }
+  }
+  delete data.goals[goalId];
+  saveData();
+  showListView();
+}
+
+// ===== Method CRUD =====
+function openMethodModal(methodId) {
+  editingMethodId = methodId || null;
+  document.getElementById('methodModalTitle').textContent = methodId ? '编辑方法' : '添加方法';
+  pendingVideoFiles = [];
+  if (methodId) {
+    const m = data.goals[currentGoalId].methods[methodId];
+    document.getElementById('methodName').value = m.name;
+    document.getElementById('methodDesc').value = m.description || '';
+    (m.videos||[]).forEach(v => pendingVideoFiles.push({id:v.id,name:v.name,size:v.size,existing:true}));
+  } else {
+    document.getElementById('methodName').value = '';
+    document.getElementById('methodDesc').value = '';
+  }
+  document.getElementById('videoFileInput').value = '';
+  renderPendingVideos();
+  document.getElementById('methodModal').classList.add('active');
+}
+function onVideoFilesSelected(event) {
+  Array.from(event.target.files||[]).forEach(file => {
+    const id = genId();
+    pendingVideoFiles.push({id,file,name:file.name,size:file.size,previewUrl:URL.createObjectURL(file),existing:false});
+  });
+  event.target.value = '';
+  renderPendingVideos();
+}
+function removePendingVideo(vid) {
+  const item = pendingVideoFiles.find(v=>v.id===vid);
+  if (item && item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  pendingVideoFiles = pendingVideoFiles.filter(v=>v.id!==vid);
+  renderPendingVideos();
+}
+function renderPendingVideos() {
+  const list = document.getElementById('videoPendingList');
+  if (!pendingVideoFiles.length) { list.innerHTML=''; return; }
+  list.innerHTML = pendingVideoFiles.map(v => {
+    if (v.existing) return `<div class="video-pending-item"><div class="vpi-info"><div class="vpi-name">${esc(v.name)}</div><div class="vpi-size">已保存 · ${formatSize(v.size||0)}</div></div>
+      <button class="btn-icon" style="width:20px;height:20px" onclick="removePendingVideo('${v.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
+    return `<div class="video-pending-item"><div class="vpi-info"><div class="vpi-name">${esc(v.name)}</div><div class="vpi-size">${formatSize(v.size||0)}</div></div>
+      <button class="btn-icon" style="width:20px;height:20px" onclick="removePendingVideo('${v.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
+  }).join('');
+}
+async function saveMethod() {
+  const name = document.getElementById('methodName').value.trim();
+  if (!name) { alert('请输入名称'); return; }
+  const goal = data.goals[currentGoalId];
+  if (!goal.methods) goal.methods = {};
+  let oldVideos = [];
+  if (editingMethodId) oldVideos = goal.methods[editingMethodId].videos || [];
+  const newIds = new Set(pendingVideoFiles.map(v=>v.id));
+  for (const v of oldVideos.filter(v=>!newIds.has(v.id))) { try { await deleteVideoBlob(v.id); } catch(e){} }
+  const videosMeta = [];
+  for (const v of pendingVideoFiles) {
+    if (v.existing) { videosMeta.push({id:v.id,name:v.name,size:v.size}); }
+    else if (v.file) {
+      try {
+        await saveVideoBlob(v.id, v.file);
+        videosMeta.push({id:v.id,name:v.name,size:v.file.size});
+        if (v.previewUrl) URL.revokeObjectURL(v.previewUrl);
+      } catch(e) { alert('保存失败: '+e.message); }
+    }
+  }
+  if (editingMethodId) {
+    goal.methods[editingMethodId].name = name;
+    goal.methods[editingMethodId].description = document.getElementById('methodDesc').value.trim();
+    goal.methods[editingMethodId].videos = videosMeta;
+  } else {
+    const id = genId();
+    goal.methods[id] = {id,name,description:document.getElementById('methodDesc').value.trim(),videos:videosMeta};
+  }
+  saveData();
+  closeModal('methodModal');
+  renderDetail();
+}
+async function deleteMethod(methodId) {
+  if (!confirm('删除此方法？视频也会被删除。')) return;
+  const goal = data.goals[currentGoalId];
+  for (const v of (goal.methods[methodId].videos||[])) { try { await deleteVideoBlob(v.id); } catch(e){} }
+  delete goal.methods[methodId];
+  saveData();
+  renderDetail();
+}
+async function removeVideoFromMethod(methodId,videoId) {
+  if (!confirm('删除此视频？')) return;
+  const goal = data.goals[currentGoalId];
+  if (goal.methods[methodId]) {
+    goal.methods[methodId].videos = (goal.methods[methodId].videos||[]).filter(v=>v.id!==videoId);
+    try { await deleteVideoBlob(videoId); } catch(e){}
+    saveData();
+    renderDetail();
+  }
+}
+
+// ===== Task CRUD =====
+function openTaskModal() {
+  document.getElementById('taskContent').value = '';
+  document.getElementById('taskDuration').value = '';
+  document.getElementById('taskNote').value = '';
+  const select = document.getElementById('taskMethodLink');
+  const methods = Object.values(data.goals[currentGoalId].methods||{});
+  select.innerHTML = '<option value="">不关联</option>' + methods.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');
+  document.getElementById('taskModal').classList.add('active');
+}
+function saveTask() {
+  const content = document.getElementById('taskContent').value.trim();
+  if (!content) { alert('请输入内容'); return; }
+  const goal = data.goals[currentGoalId];
+  if (!goal.tasks) goal.tasks = {};
+  if (!goal.tasks[currentTaskDate]) goal.tasks[currentTaskDate] = [];
+  goal.tasks[currentTaskDate].push({
+    content,
+    methodId: document.getElementById('taskMethodLink').value || null,
+    duration: document.getElementById('taskDuration').value.trim(),
+    note: document.getElementById('taskNote').value.trim(),
+    completed: false, completedAt: null
+  });
+  saveData();
+  closeModal('taskModal');
+  renderDetail();
+}
+function deleteTask(date,idx) {
+  const goal = data.goals[currentGoalId];
+  if (goal.tasks[date]) {
+    goal.tasks[date].splice(idx,1);
+    if (!goal.tasks[date].length) delete goal.tasks[date];
+    saveData();
+    renderDetail();
+  }
+}
+
+// ===== Init =====
+(async function init() {
+  loadData();
+  loadSettings();
+  try { await openVideoDB(); } catch(e) { console.warn(e); }
+  renderGoalList();
+  updateSyncStatus('synced');
+  // Request persistent storage
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().then(persistent => {
+      console.log('Persistent storage:', persistent);
+    });
+  }
+})();
+</script>
+</body>
+</html>
