@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#5b6abf">
 <title>目标计划工作台</title>
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi55ue5qCH6K6h5YiS5bel5Y2V5a6hIiwic2hvcnRfbmFtZSI6IuiuoeeahOahoSIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjVmNmZhIiwidGhlbWVfY29sb3IiOiIjNWI2YWJmIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjxyZWN0IHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyByeD0nMjAnIGZpbGw9JyM1YjZhYmYnLz48cGF0aCBkPSdNNTAgMjBMNzAgNDVINTVaJyBmaWxsPScjZmZmJy8+PHBhdGggZD0nTTMwIDU1SDcwVjcwSDMwWicgZmlsbD0nI2ZmZicvPjwvc3ZnPiIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+<link rel="manifest" href="manifest.json">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -310,7 +310,7 @@ textarea{resize:vertical;min-height:60px}
       <button class="btn btn-secondary btn-sm" onclick="manualBackup()">立即备份</button>
     </div>
     <div class="hint" style="margin-top:8px;font-size:.72rem;color:var(--text-muted)">
-      💡 提示：选择 OneDrive/坚果云/百度网盘 的同步文件夹，可实现跨设备同步
+      💡 提示：电脑端可选择 OneDrive/123云盘 同步文件夹实现自动备份；手机端点"立即备份"可直接下载文件
     </div>
   </div>
 
@@ -623,17 +623,29 @@ function toggleAutoBackup() {
 }
 
 async function manualBackup() {
-  if (!backupDirHandle) {
-    alert('请先选择备份文件夹');
-    return;
-  }
   try {
     const json = JSON.stringify(data, null, 2);
     const fileName = 'plan-workspace-backup-' + getLocalDate() + '.json';
-    const fileHandle = await backupDirHandle.getFileHandle(fileName, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(json);
-    await writable.close();
+    
+    // 如果选择了备份文件夹，使用 File System Access API
+    if (backupDirHandle) {
+      const fileHandle = await backupDirHandle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(json);
+      await writable.close();
+    } else {
+      // 否则使用传统下载方式（支持手机端）
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
     settings.lastBackup = getLocalNow();
     saveSettings();
     showToast('备份完成!');
@@ -1079,6 +1091,21 @@ function deleteTask(date,idx) {
     });
   }
 })();
+</script>
+
+<script>
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/LJ/sw.js')
+      .then((registration) => {
+        console.log('[PWA] Service Worker registered:', registration.scope);
+      })
+      .catch((error) => {
+        console.log('[PWA] Service Worker registration failed:', error);
+      });
+  });
+}
 </script>
 </body>
 </html>
